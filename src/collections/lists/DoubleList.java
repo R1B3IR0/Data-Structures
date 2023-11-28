@@ -1,8 +1,9 @@
 package collections.lists;
 
-import collections.exceptions.*; // ElementNotFoundException, EmptyCollectionException
+import collections.exceptions.*; // ElementNotFoundException, EmptyCollectionException, ConcurrentModificationException
+import collections.exceptions.ConcurrentModificationException;
 
-import java.util.*; // Iterator, NoSuchElementException, ConcurrentModificationException
+import java.util.*; // Iterator, NoSuchElementException
 
 public abstract class DoubleList<T> implements ListADT<T> {
     /**

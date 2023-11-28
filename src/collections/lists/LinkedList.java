@@ -1,9 +1,7 @@
 package collections.lists;
 
-import collections.exceptions.ElementNotFoundException;
-import collections.exceptions.EmptyCollectionException;
+import collections.exceptions.*;
 
-import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
 public abstract class LinkedList<T> implements ListADT<T> {

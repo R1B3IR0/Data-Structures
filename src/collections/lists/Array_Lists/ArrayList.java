@@ -1,11 +1,9 @@
 package collections.lists.Array_Lists;
 
 
-import collections.exceptions.ElementNotFoundException;
-import collections.exceptions.EmptyCollectionException;
+import collections.exceptions.*;
 import collections.lists.ListADT;
 
-import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 
 public abstract class ArrayList<T> implements ListADT<T> {
