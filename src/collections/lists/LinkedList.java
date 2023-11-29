@@ -5,7 +5,6 @@ import collections.exceptions.*;
 import java.util.Iterator;
 
 public abstract class LinkedList<T> implements ListADT<T> {
-
     protected int count;
     protected LinearNode<T> head, tail;
     protected int modCount;
@@ -233,9 +232,10 @@ public abstract class LinkedList<T> implements ListADT<T> {
         String result = "";
         LinearNode<T> current = head;
         while (current != null) {
-            result += current.getElement() + "\n";
+            result += current.getElement() + " ";
             current = current.getNext();
         }
         return result;
     }
+
 }

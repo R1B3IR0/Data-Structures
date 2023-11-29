@@ -1,7 +1,5 @@
 package collections.lists;
 
-
-
 import java.util.Iterator;
 
 public interface ListADT<T> extends Iterable<T> {
