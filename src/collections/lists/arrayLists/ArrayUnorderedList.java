@@ -1,8 +1,6 @@
-package collections.lists.Array_Lists;
+package collections.lists.arrayLists;
 
 import collections.exceptions.ElementNotFoundException;
-import collections.lists.DoubleNode;
-import collections.lists.LinearNode;
 import collections.lists.UnorderedListADT;
 
 public class ArrayUnorderedList<T> extends ArrayList<T> implements UnorderedListADT<T> {

@@ -5,7 +5,7 @@ import collections.exceptions.ConcurrentModificationException;
 
 import java.util.*; // Iterator, NoSuchElementException
 
-public abstract class DoubleList<T> implements ListADT<T> {
+public abstract class DoubleLinkedList<T> implements ListADT<T> {
     /**
      * The front of the list
      * The rear of the list
@@ -55,13 +55,13 @@ public abstract class DoubleList<T> implements ListADT<T> {
 
         @Override
         public void remove() {
-            if (expectedModCount != DoubleList.this.modCount) {
+            if (expectedModCount != DoubleLinkedList.this.modCount) {
                 throw new ConcurrentModificationException();
             }
             if (!okToRemove) {
                 throw new IllegalStateException();
             }
-            DoubleList.this.remove(previous.getElement());
+            DoubleLinkedList.this.remove(previous.getElement());
             expectedModCount++;
             okToRemove = false;
         }
@@ -70,7 +70,7 @@ public abstract class DoubleList<T> implements ListADT<T> {
     /**
      * Creates an empty list.
      */
-    public DoubleList() {
+    public DoubleLinkedList() {
         front = null;
         rear = null;
         count = 0;

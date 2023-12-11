@@ -36,7 +36,7 @@ public class LinearNode <T> {
 
     @Override
     public String toString() {
-        String str = "";
+        String str = " ";
 
         str += str + element.toString();
 

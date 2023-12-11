@@ -1,4 +1,4 @@
-package collections.lists.Array_Lists;
+package collections.lists.arrayLists;
 
 
 import collections.exceptions.*;
@@ -10,7 +10,6 @@ public abstract class ArrayList<T> implements ListADT<T> {
     private static final int DEFAULT_CAPACITY = 100;
     private final int NOT_FOUND = -1;
     protected int rear;
-
     protected T[] list;
     protected int modCount;
 

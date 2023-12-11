@@ -1,4 +1,4 @@
-package collections.lists.Array_Lists;
+package collections.lists.arrayLists;
 
 
 import collections.lists.OrderedListADT;

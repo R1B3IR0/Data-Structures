@@ -1,4 +1,4 @@
-package collections.Demos;
+package collections.demos;
 
 import collections.lists.OrderedLinkedList;
 

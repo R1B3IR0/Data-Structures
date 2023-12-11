@@ -6,7 +6,8 @@ import java.util.Iterator;
 
 public abstract class LinkedList<T> implements ListADT<T> {
     protected int count;
-    protected LinearNode<T> head, tail;
+    public LinearNode<T> head, tail;
+
     protected int modCount;
 
     private class BasicIterator implements Iterator<T>{
@@ -229,7 +230,7 @@ public abstract class LinkedList<T> implements ListADT<T> {
      */
     @Override
     public String toString() {
-        String result = "";
+        String result = " ";
         LinearNode<T> current = head;
         while (current != null) {
             result += current.getElement() + " ";
@@ -237,5 +238,4 @@ public abstract class LinkedList<T> implements ListADT<T> {
         }
         return result;
     }
-
 }
