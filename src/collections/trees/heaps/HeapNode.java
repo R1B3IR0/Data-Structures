@@ -10,7 +10,7 @@ public class HeapNode<T> extends BinaryTreeNode<T> {
      *
      * @param obj the data to be contained within the new heap nodes
      */
-    HeapNode(T obj) {
+    public HeapNode(T obj) {
         super(obj);
         parent = null;
     }
