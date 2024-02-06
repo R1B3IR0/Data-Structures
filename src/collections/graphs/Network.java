@@ -11,9 +11,10 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     private double[][] adjMatrix;
 
     public Network() {
+        super();
         numVertices = 0;
         this.adjMatrix = new double[DEFAULT_CAPACITY][DEFAULT_CAPACITY];
-        this.vertices = (T[])(new Object[DEFAULT_CAPACITY]);
+        this.vertices = (T[]) (new Object[DEFAULT_CAPACITY]);
     }
 
     /**
@@ -68,7 +69,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
         result += "index\tweight\n\n";
 
         for (int i = 0; i < numVertices; i++) {
-            for (int j = numVertices-1; j > i; j--) {
+            for (int j = numVertices - 1; j > i; j--) {
                 if (adjMatrix[i][j] < Double.POSITIVE_INFINITY) {
                     result += i + " to " + j + "\t";
                     result += adjMatrix[i][j] + "\n";
@@ -87,10 +88,12 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * @param index2 the second index
      * @param weight the weight
      **/
-    public void addEdge (int index1, int index2, double weight) {
+    public void addEdge(int index1, int index2, double weight) {
         if (indexIsValid(index1) && indexIsValid(index2)) {
             adjMatrix[index1][index2] = weight;
             adjMatrix[index2][index1] = weight;
+            super.adjMatrix[index1][index2] = true;
+            super.adjMatrix[index2][index1] = true;
         }
     }
 
@@ -100,7 +103,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * @param index1 the first index
      * @param index2 the second index
      **/
-    public void removeEdge (int index1, int index2) {
+    public void removeEdge(int index1, int index2) {
         if (indexIsValid(index1) && indexIsValid(index2)) {
             adjMatrix[index1][index2] = Double.POSITIVE_INFINITY;
             adjMatrix[index2][index1] = Double.POSITIVE_INFINITY;
@@ -110,12 +113,13 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     /**
      * Inserts an edge with the given weight between two vertices of
      * the graph.
+     *
      * @param vertex1 the first vertex
      * @param vertex2 the second vertex
-     * @param weight the weight of the edge
+     * @param weight  the weight of the edge
      **/
-    public void addEdge (T vertex1, T vertex2, double weight) {
-        addEdge (getIndex(vertex1), getIndex(vertex2), weight);
+    public void addEdge(T vertex1, T vertex2, double weight) {
+        addEdge(getIndex(vertex1), getIndex(vertex2), weight);
     }
 
     /**
@@ -126,8 +130,8 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * @param vertex2 the second vertex
      **/
     @Override
-    public void addEdge (T vertex1, T vertex2) {
-        addEdge (getIndex(vertex1), getIndex(vertex2), 0);
+    public void addEdge(T vertex1, T vertex2) {
+        addEdge(getIndex(vertex1), getIndex(vertex2), 0);
     }
 
     /**
@@ -136,17 +140,18 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * @param vertex1 the first vertex
      * @param vertex2 the second vertex
      **/
-    public void removeEdge (T vertex1, T vertex2) {
-        removeEdge (getIndex(vertex1), getIndex(vertex2));
+    public void removeEdge(T vertex1, T vertex2) {
+        removeEdge(getIndex(vertex1), getIndex(vertex2));
     }
 
     /**
      * Adds a vertex to the graph, expanding the capacity of the graph
      * if necessary.
      **/
-    public void addVertex () {
+    public void addVertex() {
         if (numVertices == vertices.length) {
             expandCapacity();
+            super.expandCapacity();
         }
 
         vertices[numVertices] = null;
@@ -155,6 +160,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
             adjMatrix[i][numVertices] = Double.POSITIVE_INFINITY;
         }
         numVertices++;
+
     }
 
     /**
@@ -163,25 +169,29 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      *
      * @param vertex the vertex to add to the graph
      **/
-    public void addVertex (T vertex) {
+    public void addVertex(T vertex) {
+
         if (numVertices == vertices.length) {
             expandCapacity();
+            super.expandCapacity();
         }
 
         vertices[numVertices] = vertex;
         for (int i = 0; i <= numVertices; i++) {
             adjMatrix[numVertices][i] = Double.POSITIVE_INFINITY;
             adjMatrix[i][numVertices] = Double.POSITIVE_INFINITY;
+
         }
         numVertices++;
+
     }
 
     /**
      * Removes a vertex at the given index from the graph.  Note that
      * this may affect the index values of other vertices.
      **/
-    public void removeVertex (int index) {
-        if (indexIsValid(index))  {
+    public void removeVertex(int index) {
+        if (indexIsValid(index)) {
             numVertices--;
 
             for (int i = index; i < numVertices; i++) {
@@ -205,7 +215,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     /**
      * Removes a single vertex with the given value from the graph.
      **/
-    public void removeVertex (T vertex) {
+    public void removeVertex(T vertex) {
         for (int i = 0; i < numVertices; i++) {
             if (vertex.equals(vertices[i])) {
                 removeVertex(i);
@@ -219,7 +229,6 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * traversal starting at the given index.
      *
      * @param startIndex the index from which to begin the traversal
-     *
      * @return an iterator that performs a depth first traversal
      **/
     private Iterator<T> iteratorDFS(int startIndex) {
@@ -248,7 +257,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
             /** Find a vertex adjacent to x that has not been visited
              and push it on the stack */
             for (int i = 0; (i < numVertices) && !found; i++) {
-                if((adjMatrix[x.intValue()][i] < Double.POSITIVE_INFINITY)
+                if ((adjMatrix[x.intValue()][i] < Double.POSITIVE_INFINITY)
                         && !visited[i]) {
                     traversalStack.push(new Integer(i));
                     resultList.addToRear(vertices[i]);
@@ -268,7 +277,6 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * traversal starting at the given vertex.
      *
      * @param startVertex the vertex to begin the traversal from
-     *
      * @return an iterator that performs a depth first traversal
      **/
     public Iterator<T> iteratorDFS(T startVertex) {
@@ -305,7 +313,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
             /** Find all vertices adjacent to x that have not been
              visited and queue them up */
             for (int i = 0; i < numVertices; i++) {
-                if((adjMatrix[x.intValue()][i] < Double.POSITIVE_INFINITY)
+                if ((adjMatrix[x.intValue()][i] < Double.POSITIVE_INFINITY)
                         && !visited[i]) {
                     traversalQueue.enqueue(new Integer(i));
                     visited[i] = true;
@@ -330,9 +338,8 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * Returns an iterator that contains the indices of the vertices
      * that are in the shortest path between the two given vertices.
      *
-     * @param startIndex the starting index
+     * @param startIndex  the starting index
      * @param targetIndex the target index
-     *
      * @return the iterator containing the indices of the vertices
      **/
     protected Iterator<Integer> iteratorShortestPathIndices
@@ -395,7 +402,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
              Also, add each unvisited vertex to the heap. */
             for (int i = 0; i < numVertices; i++) {
                 if (!visited[i]) {
-                    if((adjMatrix[index][i] < Double.POSITIVE_INFINITY) &&
+                    if ((adjMatrix[index][i] < Double.POSITIVE_INFINITY) &&
                             (pathWeight[index] + adjMatrix[index][i]) < pathWeight[i]) {
                         pathWeight[i] = pathWeight[index] + adjMatrix[index][i];
                         predecessor[i] = index;
@@ -424,11 +431,10 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * the vertex with the given index and also has a pathWeight equal
      * to weight.
      *
-     * @param visited the array of booleans to check against to see if a vertex has been visited or not
-     *        (true if visited, false if not)
+     * @param visited    the array of booleans to check against to see if a vertex has been visited or not
+     *                   (true if visited, false if not)
      * @param pathWeight the array of doubles to check against to see if a vertex has a pathWeight equal to weight
-     * @param weight the weight of the path
-     *
+     * @param weight     the weight of the path
      * @return the index of the vertex that is adjacent to the vertex with the given index and also has a pathWeight
      * equal to weight
      **/
@@ -451,9 +457,8 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * Returns an iterator that contains the shortest path between
      * the two vertices.
      *
-     * @param startIndex the starting index
+     * @param startIndex  the starting index
      * @param targetIndex the target index
-     *
      * @return an iterator that contains the shortest path between the two vertices specified by the indices
      * of the vertices in the path
      **/
@@ -475,9 +480,8 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * Returns an iterator that contains the shortest path between
      * the two vertices.
      *
-     * @param startVertex the starting vertex
+     * @param startVertex  the starting vertex
      * @param targetVertex the target vertex
-     *
      * @return an iterator that contains the shortest path between the two vertices
      **/
     public Iterator<T> iteratorShortestPath(T startVertex, T targetVertex) {
@@ -489,9 +493,8 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * Returns the weight of the least weight path in the network.
      * Returns positive infinity if no path is found.
      *
-     * @param startIndex the starting index
+     * @param startIndex  the starting index
      * @param targetIndex the target index
-     *
      * @return the weight of the least weight path in the network
      **/
     public double shortestPathWeight(int startIndex, int targetIndex) {
@@ -523,9 +526,8 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * Returns the weight of the least weight path in the network.
      * Returns positive infinity if no path is found.
      *
-     * @param startVertex the starting vertex
+     * @param startVertex  the starting vertex
      * @param targetVertex the target vertex
-     *
      * @return the weight of the least weight path in the network
      **/
     @Override
@@ -555,7 +557,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
                 resultGraph.adjMatrix[i][j] = Double.POSITIVE_INFINITY;
             }
         }
-        resultGraph.vertices = (T[])(new Object[numVertices]);
+        resultGraph.vertices = (T[]) (new Object[numVertices]);
 
         boolean[] visited = new boolean[numVertices];
         for (int i = 0; i < numVertices; i++) {
@@ -615,7 +617,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * Returns the edge with the given weight.  Exactly one vertex of
      * the edge must have been visited.
      *
-     * @param weight the weight of the edge to be found
+     * @param weight  the weight of the edge to be found
      * @param visited the array of booleans to check against to see if a vertex has been visited or not
      *                (true if visited, false if not)
      * @return the edge with the given weight and a vertex that has been visited
@@ -643,9 +645,9 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
      * twice the capacity.
      **/
     protected void expandCapacity() {
-        T[] largerVertices = (T[])(new Object[vertices.length*2]);
+        T[] largerVertices = (T[]) (new Object[vertices.length * 2]);
         double[][] largerAdjMatrix =
-                new double[vertices.length*2][vertices.length*2];
+                new double[vertices.length * 2][vertices.length * 2];
 
         for (int i = 0; i < numVertices; i++) {
             for (int j = 0; j < numVertices; j++) {
