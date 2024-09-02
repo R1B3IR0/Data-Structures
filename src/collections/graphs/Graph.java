@@ -1,28 +1,29 @@
 package collections.graphs;
 
+
+import collections.exceptions.EmptyCollectionException;
 import collections.lists.arrayLists.ArrayUnorderedList;
 import collections.queues.LinkedQueue;
 import collections.stacks.LinkedStack;
+import collections.trees.heaps.PriorityQueue;
 
 import java.util.Iterator;
 
-
 /**
- * Graph represents an adjacency matrix implementation of a graph.
- * @param <T>
+ * The Graph class represents an adjacency matrix implementation of a graph.
+ * This class provides methods for standard graph operations including adding and removing vertices and edges,
+ * and performing various types of traversals (such as BFS and DFS).
+ *
+ * @param <T> the type of elements held in this graph
  */
 public class Graph<T> implements GraphADT<T> {
-    /** The default capacity of the graph */
     protected final int DEFAULT_CAPACITY = 10;
-    /** The number of vertices in the graph */
     protected int numVertices;
-    /** The flag used to indicate whether the graph is directed */
     protected boolean[][] adjMatrix;
-    /** The indices of the vertices */
-    protected T[] vertices; // values of vertices
+    protected T[] vertices;
 
     /**
-     * Creates an empty graph.
+     * Constructs an empty graph with default capacity.
      */
     public Graph() {
         numVertices = 0;
@@ -31,183 +32,107 @@ public class Graph<T> implements GraphADT<T> {
     }
 
     /**
-     * Returns a string representation of the adjacency matrix.
-     **/
-    @Override
-    public String toString() {
-        if (numVertices == 0) {
-            return "Graph is empty";
-        }
+     * Adds an edge between two specified vertices.
+     *
+     * @param vertex1 the first vertex
+     * @param vertex2 the second vertex
+     * @throws IllegalArgumentException if a specified vertex does not exist
+     */
+    public void addEdge(T vertex1, T vertex2) {
+        int index1 = getIndex(vertex1);
+        int index2 = getIndex(vertex2);
 
-        String result = new String("");
-
-        result += "Adjacency Matrix\n";
-        result += "----------------\n";
-        result += "index\t";
-
-        for (int i = 0; i < numVertices; i++) {
-            result += "" + i;
-            if (i < 10) {
-                result += " ";
-            }
-        }
-        result += "\n\n";
-
-        for (int i = 0; i < numVertices; i++) {
-            result += "" + i + "\t";
-
-            for (int j = 0; j < numVertices; j++) {
-                if (adjMatrix[i][j]) {
-                    result += "1 ";
-                } else {
-                    result += "0 ";
-                }
-            }
-            result += "\n";
-        }
-
-        result += "\n\nVertex Values";
-        result += "\n-------------\n";
-        result += "index\tvalue\n\n";
-
-        for (int i = 0; i < numVertices; i++) {
-            result += "" + i + "\t";
-            result += vertices[i].toString() + "\n";
-        }
-        result += "\n";
-        return result;
-    }
-
-    /**
-     * Inserts an edge between two vertices of the graph.
-     **/
-    public void addEdge (int index1, int index2) {
         if (indexIsValid(index1) && indexIsValid(index2)) {
-            adjMatrix[index1][index2] = true;
-            adjMatrix[index2][index1] = true;
+            addEdge(index1, index2); // Chama o método sobrecarregado baseado em índices
+        } else {
+            // Tratamento de erro: um ou ambos os vértices não foram encontrados
+            throw new IllegalArgumentException("Vertex not found");
         }
     }
 
     /**
-     * Removes an edge between two vertices of the graph.
-     **/
-    public void removeEdge (int index1, int index2) {
+     * Adds an edge between two vertices represented by their indices.
+     * This method is intended for internal use.
+     *
+     * @param index1 index of the first vertex
+     * @param index2 index of the second vertex
+     */
+    protected void addEdge(int index1, int index2) {
+        adjMatrix[index1][index2] = true;
+        adjMatrix[index2][index1] = true;
+    }
+
+    /**
+     * Removes the edge between two specified vertices.
+     *
+     * @param vertex1 the first vertex
+     * @param vertex2 the second vertex
+     */
+    public void removeEdge(T vertex1, T vertex2) {
+        int index1 = getIndex(vertex1);
+        int index2 = getIndex(vertex2);
+
         if (indexIsValid(index1) && indexIsValid(index2)) {
             adjMatrix[index1][index2] = false;
             adjMatrix[index2][index1] = false;
         }
     }
 
-    /**
-     * Inserts an edge between two vertices of the graph.
-     **/
     @Override
-    public void addEdge (T vertex1, T vertex2) {
-        addEdge (getIndex(vertex1), getIndex(vertex2));
-    }
-
-    /**
-     * Removes an edge between two vertices of the graph.
-     **/
-    @Override
-    public void removeEdge (T vertex1, T vertex2) {
-        removeEdge (getIndex(vertex1), getIndex(vertex2));
-    }
-
-    /**
-     * Adds a vertex to the graph, expanding the capacity of the graph
-     * if necessary.
-     **/
-    public void addVertex () {
-        if (numVertices == vertices.length) {
-            expandCapacity();
-        }
-
-        vertices[numVertices] = null;
-        for (int i = 0; i <= numVertices; i++) {
-            adjMatrix[numVertices][i] = false;
-            adjMatrix[i][numVertices] = false;
-        }
-        numVertices++;
-    }
-
-    /**
-     * Adds a vertex to the graph, expanding the capacity of the graph
-     * if necessary.  It also associates an object with the vertex.
-     *
-     * @param vertex the vertex to add to the graph
-     **/
-    @Override
-    public void addVertex (T vertex) {
-        if (numVertices == vertices.length) {
-            expandCapacity();
-        }
-
-        vertices[numVertices] = vertex;
-        for (int i = 0; i <= numVertices; i++) {
-            adjMatrix[numVertices][i] = false;
-            adjMatrix[i][numVertices] = false;
-        }
-        numVertices++;
-    }
-
-    /**
-     * Removes a vertex at the given index from the graph.  Note that
-     * this may affect the index values of other vertices.
-     *
-     * @param index the index at which the vertex is to be removed from
-     **/
-    public void removeVertex (int index) {
-        if (indexIsValid(index)) {
-            numVertices--;
-
-            for (int i = index; i < numVertices; i++) {
-                vertices[i] = vertices[i + 1];
+    public Iterator<T> iteratorBFS(T startVertex) {
+        int startIndex = getIndex(startVertex);
+        if (indexIsValid(startIndex)) {
+            try {
+                return iteratorBFS(startIndex);
+            } catch (EmptyCollectionException e) {
+                e.printStackTrace();
             }
+        }
+        return null;
+    }
 
-            for (int i = index; i < numVertices; i++) {
-                for (int j = 0; j <= numVertices; j++) {
-                    adjMatrix[i][j] = adjMatrix[i + 1][j];
-                }
+    @Override
+    public Iterator<T> iteratorDFS(T startVertex) {
+        int startIndex = getIndex(startVertex);
+        if (indexIsValid(startIndex)) {
+            try {
+                return iteratorDFS(startIndex);
+            } catch (EmptyCollectionException e) {
+                e.printStackTrace();
             }
+        }
+        return null;
+    }
 
-            for (int i = index; i < numVertices; i++) {
-                for (int j = 0; j < numVertices; j++) {
-                    adjMatrix[j][i] = adjMatrix[j][i + 1];
+    public Iterator<T> iteratorBFS(int startIndex) throws EmptyCollectionException {
+        LinkedQueue<Integer> traversalQueue = new LinkedQueue<>();
+        ArrayUnorderedList<T> resultList = new ArrayUnorderedList<>();
+        if (!indexIsValid(startIndex)) return resultList.iterator();
+
+        boolean[] visited = new boolean[numVertices];
+        traversalQueue.enqueue(startIndex);
+        visited[startIndex] = true;
+
+        while (!traversalQueue.isEmpty()) {
+            int x = traversalQueue.dequeue();
+            resultList.addToRear(vertices[x]);
+
+            for (int i = 0; i < numVertices; i++) {
+                if (adjMatrix[x][i] && !visited[i]) {
+                    traversalQueue.enqueue(i);
+                    visited[i] = true;
                 }
             }
         }
+        return resultList.iterator();
     }
 
-    /**
-     * Removes a single vertex with the given value from the graph.
-     *
-     * @param vertex the vertex to be removed from the graph
-     **/
-    @Override
-    public void removeVertex (T vertex) {
-        for (int i = 0; i < numVertices; i++) {
-            if (vertex.equals(vertices[i])) {
-                removeVertex(i);
-                return;
-            }
-        }
-    }
-
-    /**
-     * Returns an iterator that performs a depth first search
-     * traversal starting at the given index.
-     *
-     * @param startIndex the index from which to begin the traversal
-     * @return an iterator that performs a depth first traversal
-     **/
-    private Iterator<T> iteratorDFS(int startIndex) {
+    public Iterator<T> iteratorDFS(int startIndex) throws EmptyCollectionException {
         Integer x;
         boolean found;
-        LinkedStack<Integer> traversalStack = new LinkedStack<Integer>();
-        ArrayUnorderedList<T> resultList = new ArrayUnorderedList<T>();
+        LinkedStack<Integer> traversalStack = new LinkedStack<>();
+        ArrayUnorderedList<T> resultList = new ArrayUnorderedList<>();
         boolean[] visited = new boolean[numVertices];
-
         if (!indexIsValid(startIndex)) {
             return resultList.iterator();
         }
@@ -216,7 +141,7 @@ public class Graph<T> implements GraphADT<T> {
             visited[i] = false;
         }
 
-        traversalStack.push(new Integer(startIndex));
+        traversalStack.push(startIndex);
         resultList.addToRear(vertices[startIndex]);
         visited[startIndex] = true;
 
@@ -224,11 +149,9 @@ public class Graph<T> implements GraphADT<T> {
             x = traversalStack.peek();
             found = false;
 
-            /** Find a vertex adjacent to x that has not been visited
-             and push it on the stack */
             for (int i = 0; (i < numVertices) && !found; i++) {
-                if (adjMatrix[x.intValue()][i] && !visited[i]) {
-                    traversalStack.push(new Integer(i));
+                if (adjMatrix[x][i] && !visited[i]) {
+                    traversalStack.push(i);
                     resultList.addToRear(vertices[i]);
                     visited[i] = true;
                     found = true;
@@ -241,360 +164,241 @@ public class Graph<T> implements GraphADT<T> {
         return resultList.iterator();
     }
 
-    /**
-     * Returns an iterator that performs a depth first search
-     * traversal starting at the given vertex.
-     * @param startVertex the vertex to begin the search from
-     * @return an iterator that performs a depth first traversal
-     **/
     @Override
-    public Iterator<T> iteratorDFS(T startVertex) {
-        return iteratorDFS(getIndex(startVertex));
-    }
+    public Iterator<T> iteratorShortestPath(T startVertex, T targetVertex) throws EmptyCollectionException {
+        int startIndex = getIndex(startVertex);
+        int targetIndex = getIndex(targetVertex);
 
-    /**
-     * Returns an iterator that performs a breadth first search
-     * traversal starting at the given index.
-     *
-     * @param startIndex the index from which to begin the traversal
-     * @return an iterator that performs a breadth first traversal
-     **/
-    private Iterator<T> iteratorBFS(int startIndex) {
-        Integer x;
-        LinkedQueue<Integer> traversalQueue = new LinkedQueue<Integer>();
-        ArrayUnorderedList<T> resultList = new ArrayUnorderedList<T>();
-
-        if (!indexIsValid(startIndex)) {
-            return resultList.iterator();
-        }
-
-        boolean[] visited = new boolean[numVertices];
-        for (int i = 0; i < numVertices; i++) {
-            visited[i] = false;
-        }
-
-        traversalQueue.enqueue(new Integer(startIndex));
-        visited[startIndex] = true;
-
-        while (!traversalQueue.isEmpty()) {
-            x = traversalQueue.dequeue();
-            resultList.addToRear(vertices[x.intValue()]);
-
-            /** Find all vertices adjacent to x that have not been visited
-             and queue them up */
-            for (int i = 0; i < numVertices; i++) {
-                if (adjMatrix[x.intValue()][i] && !visited[i]) {
-                    traversalQueue.enqueue(new Integer(i));
-                    visited[i] = true;
-                }
-            }
-        }
-        return resultList.iterator();
-    }
-
-    /**
-     * Returns an iterator that performs a breadth first search
-     * traversal starting at the given vertex.
-     *
-     * @param startVertex the vertex to begin the search from
-     * @return an iterator that performs a breadth first traversal
-     **/
-    @Override
-    public Iterator<T> iteratorBFS(T startVertex) {
-        return iteratorBFS(getIndex(startVertex));
-    }
-
-    /**
-     * Returns an iterator that contains the indices of the vertices
-     * that are in the shortest path between the two given vertices.
-     *
-     * @param startIndex the starting index
-     * @param targetIndex the target index
-     **/
-    protected Iterator<Integer> iteratorShortestPathIndices
-    (int startIndex, int targetIndex) {
-        int index = startIndex;
-        int[] pathLength = new int[numVertices];
-        int[] predecessor = new int[numVertices];
-        LinkedQueue<Integer> traversalQueue = new LinkedQueue<Integer>();
-        ArrayUnorderedList<Integer> resultList =
-                new ArrayUnorderedList<Integer>();
-
-        if (!indexIsValid(startIndex) || !indexIsValid(targetIndex) ||
-                (startIndex == targetIndex)) {
-            return resultList.iterator();
-        }
-
-        boolean[] visited = new boolean[numVertices];
-        for (int i = 0; i < numVertices; i++) {
-            visited[i] = false;
-        }
-
-        traversalQueue.enqueue(new Integer(startIndex));
-        visited[startIndex] = true;
-        pathLength[startIndex] = 0;
-        predecessor[startIndex] = -1;
-
-        while (!traversalQueue.isEmpty() && (index != targetIndex)) {
-            index = (traversalQueue.dequeue()).intValue();
-
-            /** Update the pathLength for each unvisited vertex adjacent
-             to the vertex at the current index. */
-            for (int i = 0; i < numVertices; i++) {
-                if (adjMatrix[index][i] && !visited[i]) {
-                    pathLength[i] = pathLength[index] + 1;
-                    predecessor[i] = index;
-                    traversalQueue.enqueue(new Integer(i));
-                    visited[i] = true;
-                }
-            }
-        }
-        if (index != targetIndex) { // no path must have been found
-            return resultList.iterator();
-        }
-
-        LinkedStack<Integer> stack = new LinkedStack<Integer>();
-        index = targetIndex;
-        stack.push(new Integer(index));
-        do {
-            index = predecessor[index];
-            stack.push(new Integer(index));
-        } while (index != startIndex);
-
-        while (!stack.isEmpty())
-            resultList.addToRear(((Integer)stack.pop()));
-
-        return resultList.iterator();
-    }
-
-    /**
-     * Returns an iterator that contains the shortest path between
-     * the two vertices.
-     **/
-    private Iterator<T> iteratorShortestPath(int startIndex,
-                                            int targetIndex) {
-        ArrayUnorderedList<T> resultList = new ArrayUnorderedList<T>();
-        if (!indexIsValid(startIndex) || !indexIsValid(targetIndex))
-            return resultList.iterator();
-
-        Iterator<Integer> it = iteratorShortestPathIndices(startIndex,
-                targetIndex);
-        while (it.hasNext())
-            resultList.addToRear(vertices[((Integer)it.next()).intValue()]);
-        return resultList.iterator();
-    }
-
-    /**
-     * Returns an iterator that contains the shortest path between
-     * the two vertices.
-     *
-     * @param startVertex the starting vertex
-     * @param targetVertex the ending vertex
-     * @return an iterator that contains the shortest path between
-     * the two vertices
-     *
-     **/
-    @Override
-    public Iterator<T> iteratorShortestPath(T startVertex, T targetVertex) {
-        return iteratorShortestPath(getIndex(startVertex),
-                getIndex(targetVertex));
-    }
-
-    /**
-     * Returns the weight of the least weight path in the network.
-     * Returns positive infinity if no path is found.
-     * @param startIndex the starting index
-     * @param targetIndex the target index
-     **/
-    public int shortestPathLength(int startIndex, int targetIndex) {
-        int result = 0;
         if (!indexIsValid(startIndex) || !indexIsValid(targetIndex)) {
-            return 0;
+            return null;
         }
 
-        int index1, index2;
-        Iterator<Integer> it = iteratorShortestPathIndices(startIndex,
-                targetIndex);
-
-        if (it.hasNext()) {
-            index1 = ((Integer) it.next()).intValue();
-        } else {
-            return 0;
-        }
-
-        while (it.hasNext()) {
-            result++;
-            it.next();
-        }
-
-        return result;
-    }
-
-    /**
-     * Returns the weight of the least weight path in the network.
-     * Returns positive infinity if no path is found.
-     *
-     * @param startVertex the starting vertex
-     * @param targetVertex the ending vertex
-     * @return the weight of the least weight path in the network
-     **/
-    public int shortestPathLength(T startVertex, T targetVertex) {
-        return shortestPathLength(getIndex(startVertex), getIndex(
-                targetVertex));
-    }
-
-    /**
-     * Returns a minimum spanning tree of the graph.
-     * @return a minimum spanning tree of the graph
-     **/
-    public Graph getMST() {
-        int x, y;
-        int[] edge = new int[2];
-        LinkedStack<int[]> vertexStack = new LinkedStack<int[]>();
-        Graph<T> resultGraph = new Graph<T>();
-
-        if (isEmpty() || !isConnected()) {
-            return resultGraph;
-        }
-
-        resultGraph.adjMatrix = new boolean[numVertices][numVertices];
-
+        double[] distances = new double[numVertices];
+        int[] path = new int[numVertices];
         for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numVertices; j++) {
-                resultGraph.adjMatrix[i][j] = false;
-            }
+            distances[i] = Double.POSITIVE_INFINITY;
+            path[i] = -1;
         }
+        distances[startIndex] = 0;
+        PriorityQueue<Integer> queue = new PriorityQueue<>();
+        queue.addElement(startIndex, 0);
 
-        resultGraph.vertices = (T[])(new Object[numVertices]);
-        boolean[] visited = new boolean[numVertices];
+        while (!queue.isEmpty()) {
+            int u = queue.removeNext();
 
-        for (int i = 0; i < numVertices; i++) {
-            visited[i] = false;
-        }
+            // Iterar sobre todos os vértices adjacentes a 'u'
+            for (int v = 0; v < numVertices; v++) {
+                if (adjMatrix[u][v]) {
+                    double weight = 1; // Ou use o peso real da aresta, se aplicável
+                    double distanceThroughU = distances[u] + weight;
 
-        edge[0] = 0;
-        resultGraph.vertices[0] = this.vertices[0];
-        resultGraph.numVertices++;
-        visited[0] = true;
-
-        /** Add all edges that are adjacent to vertex 0 to the stack. */
-        for (int i = 0; i < numVertices; i++) {
-            if (!visited[i] && this.adjMatrix[0][i]) {
-                edge[1] = i;
-                vertexStack.push(edge.clone());
-                visited[i] = true;
-            }
-        }
-
-        while ((resultGraph.size() < this.size()) && !vertexStack.isEmpty()) {
-            /** Pop an edge off the stack and add it to the resultGraph. */
-            edge = vertexStack.pop();
-            x = edge[0];
-            y = edge[1];
-            resultGraph.vertices[y] = this.vertices[y];
-            resultGraph.numVertices++;
-            resultGraph.adjMatrix[x][y] = true;
-            resultGraph.adjMatrix[y][x] = true;
-            visited[y] = true;
-
-            /** Add all unvisited edges that are adjacent to vertex y
-             to the stack. */
-            for (int i = 0; i < numVertices; i++) {
-                if (!visited[i] && this.adjMatrix[i][y]) {
-                    edge[0] = y;
-                    edge[1] = i;
-                    vertexStack.push(edge.clone());
-                    visited[i] = true;
+                    if (distanceThroughU < distances[v]) {
+                        distances[v] = distanceThroughU;
+                        path[v] = u;
+                        queue.addElement(v, (int)distanceThroughU); // Adicionar ou atualizar na fila
+                    }
                 }
             }
         }
 
-        return resultGraph;
+        // Reconstruir e retornar o caminho mais curto usando ArrayUnorderedList
+        ArrayUnorderedList<T> pathList = new ArrayUnorderedList<T>();
+        int at = targetIndex;
+        while (at != -1) {
+            pathList.addToFront(vertices[at]); // Adiciona ao início para inverter a ordem
+            at = path[at];
+        }
+
+        // Verifica se o caminho é válido
+        if (pathList.isEmpty() || !pathList.iterator().next().equals(startVertex)) {
+            return null; // Retorna null se não houver caminho
+        }
+
+        return pathList.iterator();
+    }
+
+    // Implementações adicionais
+    @Override
+    public void addVertex(T vertex) {
+        if (numVertices == vertices.length)
+            expandCapacity();
+        vertices[numVertices] = vertex;
+        for (int i = 0; i <= numVertices; i++) {
+            adjMatrix[numVertices][i] = false;
+            adjMatrix[i][numVertices] = false;
+        }
+        numVertices++;
+    }
+
+    @Override
+    public void removeVertex(T vertex) {
+        int index = getIndex(vertex);
+        if (!indexIsValid(index)) {
+            return;
+        }
+
+        // Remove vertex and shift vertices in array
+        for (int i = index; i < numVertices - 1; i++) {
+            vertices[i] = vertices[i + 1];
+        }
+
+        // Shift rows in adjacency matrix
+        for (int i = index; i < numVertices - 1; i++) {
+            for (int j = 0; j < numVertices; j++) {
+                adjMatrix[i][j] = adjMatrix[i + 1][j];
+            }
+        }
+
+        // Shift columns in adjacency matrix
+        for (int i = 0; i < numVertices; i++) {
+            for (int j = index; j < numVertices - 1; j++) {
+                adjMatrix[i][j] = adjMatrix[i][j + 1];
+            }
+        }
+
+        numVertices--;
+    }
+
+    // Verifica se já existe uma aresta entre dois vertices
+    public boolean edgeExists(T vertex1, T vertex2) {
+        int index1 = getIndex(vertex1);
+        int index2 = getIndex(vertex2);
+
+        if (indexIsValid(index1) && indexIsValid(index2)) {
+            return adjMatrix[index1][index2];
+        } else {
+            return false;
+        }
     }
 
     /**
-     * Creates new arrays to store the contents of the graph with
-     * twice the capacity.
-     **/
+     * Checks if the graph contains a specified vertex.
+     *
+     * @param vertex the vertex to be checked
+     * @return true if the graph contains the specified vertex, false otherwise
+     */
+    public boolean containsVertex(T vertex) {
+        for (int i = 0; i < numVertices; i++) {
+            if (vertices[i].equals(vertex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Expands the capacity of the graph.
+     * This method is intended for internal use when the number of vertices exceeds the capacity.
+     */
     protected void expandCapacity() {
-        T[] largerVertices = (T[])(new Object[vertices.length*2]);
-        boolean[][] largerAdjMatrix =
-                new boolean[vertices.length*2][vertices.length*2];
+        T[] largerVertices = (T[]) (new Object[vertices.length * 2]);
+        boolean[][] largerAdjMatrix = new boolean[vertices.length * 2][vertices.length * 2];
 
         for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numVertices; j++) {
-                largerAdjMatrix[i][j] = adjMatrix[i][j];
-            }
             largerVertices[i] = vertices[i];
+            System.arraycopy(adjMatrix[i], 0, largerAdjMatrix[i], 0, numVertices);
         }
 
         vertices = largerVertices;
         adjMatrix = largerAdjMatrix;
     }
 
+    @Override
+    public boolean isEmpty() {
+        return numVertices == 0;
+    }
+
+    /**
+     * Checks if the graph is connected, meaning there is a path between every pair of vertices.
+     *
+     * @return true if the graph is connected, false otherwise
+     * @throws EmptyCollectionException if the graph is empty
+     */
+    @Override
+    public boolean isConnected() throws EmptyCollectionException {
+        //Realiza uma travessia BFS a partir do primeiro vértice e verifica se todos os vértices foram visitados.
+        if (numVertices == 0) {
+            return false;
+        }
+
+        boolean[] visited = new boolean[numVertices];
+        LinkedQueue<Integer> queue = new LinkedQueue<>();
+
+        visited[0] = true;
+        queue.enqueue(0);
+
+        while (!queue.isEmpty()) {
+            int v = queue.dequeue();
+
+            for (int i = 0; i < numVertices; i++) {
+                if (adjMatrix[v][i] && !visited[i]) {
+                    visited[i] = true;
+                    queue.enqueue(i);
+                }
+            }
+        }
+
+        for (boolean visit : visited) {
+            if (!visit) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Returns the number of vertices in the graph.
-     **/
+     *
+     * @return the number of vertices
+     */
     @Override
     public int size() {
         return numVertices;
     }
 
     /**
-     * Returns true if the graph is empty and false otherwise.
-     **/
+     * Returns a string representation of the graph.
+     *
+     * @return a string representation
+     */
     @Override
-    public boolean isEmpty() {
-        return (numVertices == 0);
-    }
-
-    /**
-     * Returns true if the graph is connected and false otherwise.
-     **/
-    @Override
-    public boolean isConnected() {
-        if (isEmpty())
-            return false;
-
-        Iterator<T> it = iteratorBFS(0);
-        int count = 0;
-
-        while (it.hasNext()) {
-            it.next();
-            count++;
+    public String toString() {
+        StringBuilder s = new StringBuilder();
+        for (int i = 0; i < numVertices; i++) {
+            s.append(vertices[i].toString()).append(": ");
+            for (boolean j : adjMatrix[i]) {
+                s.append(j ? "1 " : "0 ");
+            }
+            s.append("\n");
         }
-        return (count == numVertices);
+        return s.toString();
     }
 
     /**
-     * Returns the index value of the first occurrence of the vertex.
-     * Returns -1 if the key is not found.
-     **/
-    public int getIndex(T vertex) {
-        for (int i = 0; i < numVertices; i++)
-            if (vertices[i].equals(vertex))
+     * Obtains the index of a specified vertex.
+     * This method is intended for internal use.
+     *
+     * @param vertex the vertex whose index is to be obtained
+     * @return the index of the specified vertex
+     */
+    protected int getIndex(T vertex) {
+        for (int i = 0; i < numVertices; i++) {
+            if (vertices[i].equals(vertex)) {
                 return i;
+            }
+        }
         return -1;
     }
 
     /**
-     * Returns true if the given index is valid.
-     **/
+     * Checks if a given index is valid for the vertices array.
+     * This method is intended for internal use.
+     *
+     * @param index the index to be checked
+     * @return true if the index is valid, false otherwise
+     */
     protected boolean indexIsValid(int index) {
-        return ((index < numVertices) && (index >= 0));
-    }
-
-    /**
-     * Returns a copy of the vertices array.
-     **/
-    public Object[] getVertices() {
-        Object[] vertices = new Object[numVertices];
-        Object vertex;
-
-        for (int i = 0; i < numVertices; i++) {
-            vertex = this.vertices[i];
-            vertices[i] = vertex;
-        }
-        return vertices;
+        return index >= 0 && index < numVertices;
     }
 }

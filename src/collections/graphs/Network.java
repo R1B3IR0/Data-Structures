@@ -1,662 +1,263 @@
 package collections.graphs;
 
 import collections.lists.arrayLists.ArrayUnorderedList;
-import collections.queues.LinkedQueue;
-import collections.stacks.LinkedStack;
-import collections.trees.heaps.LinkedHeap;
 
 import java.util.Iterator;
 
+/**
+ * The Network class represents a network data structure, extending the functionality of a graph.
+ * It manages a set of vertices connected by edges, where each edge has an associated weight.
+ * This class also supports bidirectional edges and operations to find the shortest path and
+ * shortest path weight in the network.
+ *
+ * @param <T> the type of elements held in this network
+ */
 public class Network<T> extends Graph<T> implements NetworkADT<T> {
-    private double[][] adjMatrix;
 
+    /**
+     * Matrix to store the weights of the edges.
+     */
+    private double[][] weightMatrix;
+
+    /**
+     * Default constructor that initializes the network with a default capacity.
+     */
     public Network() {
         super();
-        numVertices = 0;
-        this.adjMatrix = new double[DEFAULT_CAPACITY][DEFAULT_CAPACITY];
-        this.vertices = (T[]) (new Object[DEFAULT_CAPACITY]);
+        weightMatrix = new double[DEFAULT_CAPACITY][DEFAULT_CAPACITY];
+        initializeWeightMatrix();
     }
 
     /**
-     * Returns a string representation of the adjacency matrix.
-     **/
-    public String toString() {
-        if (numVertices == 0) {
-            return "Graph is empty";
-        }
-
-        String result = new String("");
-
-        /** Print the adjacency Matrix */
-        result += "Adjacency Matrix\n";
-        result += "----------------\n";
-        result += "index\t";
-
-        for (int i = 0; i < numVertices; i++) {
-            result += "" + i;
-            if (i < 10) {
-                result += " ";
-            }
-        }
-        result += "\n\n";
-
-        for (int i = 0; i < numVertices; i++) {
-            result += "" + i + "\t";
-
-            for (int j = 0; j < numVertices; j++) {
-                if (adjMatrix[i][j] < Double.POSITIVE_INFINITY) {
-                    result += "1 ";
+     * Initializes the weight matrix with default values.
+     * The weight for an edge from a vertex to itself is set to 0, and to Double.POSITIVE_INFINITY for all other edges.
+     */
+    private void initializeWeightMatrix() {
+        for (int i = 0; i < DEFAULT_CAPACITY; i++) {
+            for (int j = 0; j < DEFAULT_CAPACITY; j++) {
+                if (i == j) {
+                    weightMatrix[i][j] = 0;
                 } else {
-                    result += "0 ";
-                }
-            }
-            result += "\n";
-        }
-
-        /** Print the vertex values */
-        result += "\n\nVertex Values";
-        result += "\n-------------\n";
-        result += "index\tvalue\n\n";
-
-        for (int i = 0; i < numVertices; i++) {
-            result += "" + i + "\t";
-            result += vertices[i].toString() + "\n";
-        }
-
-        /** Print the weights of the edges */
-        result += "\n\nWeights of Edges";
-        result += "\n----------------\n";
-        result += "index\tweight\n\n";
-
-        for (int i = 0; i < numVertices; i++) {
-            for (int j = numVertices - 1; j > i; j--) {
-                if (adjMatrix[i][j] < Double.POSITIVE_INFINITY) {
-                    result += i + " to " + j + "\t";
-                    result += adjMatrix[i][j] + "\n";
+                    weightMatrix[i][j] = Double.POSITIVE_INFINITY;
                 }
             }
         }
-
-        result += "\n";
-        return result;
     }
 
     /**
-     * Inserts an edge between two vertices of the graph.
-     *
-     * @param index1 the first index
-     * @param index2 the second index
-     * @param weight the weight
-     **/
-    public void addEdge(int index1, int index2, double weight) {
-        if (indexIsValid(index1) && indexIsValid(index2)) {
-            adjMatrix[index1][index2] = weight;
-            adjMatrix[index2][index1] = weight;
-            super.adjMatrix[index1][index2] = true;
-            super.adjMatrix[index2][index1] = true;
+     * Expands the capacity of the network when necessary.
+     */
+    @Override
+    protected void expandCapacity() {
+        super.expandCapacity();
+
+        double[][] largerWeightMatrix = new double[vertices.length][vertices.length];
+        for (int i = 0; i < numVertices; i++) {
+            System.arraycopy(weightMatrix[i], 0, largerWeightMatrix[i], 0, numVertices);
+        }
+        weightMatrix = largerWeightMatrix;
+
+        for (int i = numVertices; i < weightMatrix.length; i++) {
+            for (int j = numVertices; j < weightMatrix.length; j++) {
+                weightMatrix[i][j] = Double.POSITIVE_INFINITY;
+            }
         }
     }
 
     /**
-     * Removes an edge between two vertices of the graph.
+     * Checks whether the network contains a specific vertex.
      *
-     * @param index1 the first index
-     * @param index2 the second index
-     **/
-    public void removeEdge(int index1, int index2) {
-        if (indexIsValid(index1) && indexIsValid(index2)) {
-            adjMatrix[index1][index2] = Double.POSITIVE_INFINITY;
-            adjMatrix[index2][index1] = Double.POSITIVE_INFINITY;
+     * @param vertex the vertex to check for
+     * @return true if the vertex is present in the network, false otherwise
+     */
+    public boolean containsVertex(T vertex) {
+        for (int i = 0; i < numVertices; i++) {
+            if (vertex.equals(vertices[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Retrieves the vertex at a given index.
+     *
+     * @param index the index of the vertex
+     * @return the vertex at the specified index
+     * @throws IndexOutOfBoundsException if the index is out of range
+     */
+    public T getVertex(int index) {
+        if (indexIsValid(index)) {
+            return vertices[index];
+        } else {
+            throw new IndexOutOfBoundsException("Indice fora dos limites: " + index);
         }
     }
 
     /**
-     * Inserts an edge with the given weight between two vertices of
-     * the graph.
+     * Retrieves the weight of the edge between two vertices.
+     *
+     * @param vertex1 the first vertex
+     * @param vertex2 the second vertex
+     * @return the weight of the edge
+     * @throws IllegalArgumentException if either vertex is not found
+     */
+    public double getWeight(T vertex1, T vertex2) {
+        int index1 = getIndex(vertex1);
+        int index2 = getIndex(vertex2);
+
+        if (indexIsValid(index1) && indexIsValid(index2)) {
+            return weightMatrix[index1][index2];
+        } else {
+            throw new IllegalArgumentException("Vértice não encontrado");
+        }
+    }
+
+    /**
+     * Adds an edge between two vertices with a specified weight.
      *
      * @param vertex1 the first vertex
      * @param vertex2 the second vertex
      * @param weight  the weight of the edge
-     **/
-    public void addEdge(T vertex1, T vertex2, double weight) {
-        addEdge(getIndex(vertex1), getIndex(vertex2), weight);
-    }
-
-    /**
-     * Inserts an edge between two vertices of the graph.  Assumes a
-     * weight of 0.
-     *
-     * @param vertex1 the first vertex
-     * @param vertex2 the second vertex
-     **/
+     */
     @Override
-    public void addEdge(T vertex1, T vertex2) {
-        addEdge(getIndex(vertex1), getIndex(vertex2), 0);
+    public void addEdge(T vertex1, T vertex2, double weight) {
+        int index1 = getIndex(vertex1);
+        int index2 = getIndex(vertex2);
+
+        if (indexIsValid(index1) && indexIsValid(index2)) {
+            adjMatrix[index1][index2] = true;
+            weightMatrix[index1][index2] = weight;
+        }
     }
 
     /**
-     * Removes an edge between two vertices of the graph.
+     * Finds the shortest path from a start vertex to an end vertex, avoiding certain locations.
      *
-     * @param vertex1 the first vertex
-     * @param vertex2 the second vertex
-     **/
-    public void removeEdge(T vertex1, T vertex2) {
-        removeEdge(getIndex(vertex1), getIndex(vertex2));
-    }
-
-    /**
-     * Adds a vertex to the graph, expanding the capacity of the graph
-     * if necessary.
-     **/
-    public void addVertex() {
-        if (numVertices == vertices.length) {
-            expandCapacity();
-            super.expandCapacity();
-        }
-
-        vertices[numVertices] = null;
-        for (int i = 0; i <= numVertices; i++) {
-            adjMatrix[numVertices][i] = Double.POSITIVE_INFINITY;
-            adjMatrix[i][numVertices] = Double.POSITIVE_INFINITY;
-        }
-        numVertices++;
-
-    }
-
-    /**
-     * Adds a vertex to the graph, expanding the capacity of the graph
-     * if necessary.  It also associates an object with the vertex.
-     *
-     * @param vertex the vertex to add to the graph
-     **/
-    public void addVertex(T vertex) {
-
-        if (numVertices == vertices.length) {
-            expandCapacity();
-            super.expandCapacity();
-        }
-
-        vertices[numVertices] = vertex;
-        for (int i = 0; i <= numVertices; i++) {
-            adjMatrix[numVertices][i] = Double.POSITIVE_INFINITY;
-            adjMatrix[i][numVertices] = Double.POSITIVE_INFINITY;
-
-        }
-        numVertices++;
-
-    }
-
-    /**
-     * Removes a vertex at the given index from the graph.  Note that
-     * this may affect the index values of other vertices.
-     **/
-    public void removeVertex(int index) {
-        if (indexIsValid(index)) {
-            numVertices--;
-
-            for (int i = index; i < numVertices; i++) {
-                vertices[i] = vertices[i + 1];
-            }
-
-            for (int i = index; i < numVertices; i++) {
-                for (int j = 0; j <= numVertices; j++) {
-                    adjMatrix[i][j] = adjMatrix[i + 1][j];
-                }
-            }
-
-            for (int i = index; i < numVertices; i++) {
-                for (int j = 0; j < numVertices; j++) {
-                    adjMatrix[j][i] = adjMatrix[j][i + 1];
-                }
-            }
-        }
-    }
-
-    /**
-     * Removes a single vertex with the given value from the graph.
-     **/
-    public void removeVertex(T vertex) {
-        for (int i = 0; i < numVertices; i++) {
-            if (vertex.equals(vertices[i])) {
-                removeVertex(i);
-                return;
-            }
-        }
-    }
-
-    /**
-     * Returns an iterator that performs a depth first search
-     * traversal starting at the given index.
-     *
-     * @param startIndex the index from which to begin the traversal
-     * @return an iterator that performs a depth first traversal
-     **/
-    private Iterator<T> iteratorDFS(int startIndex) {
-        Integer x;
-        boolean found;
-        LinkedStack<Integer> traversalStack = new LinkedStack<Integer>();
-        ArrayUnorderedList<T> resultList = new ArrayUnorderedList<T>();
+     * @param startVertex       the index of the start vertex
+     * @param endVertex         the index of the end vertex
+     * @return an iterator over the indices of the vertices in the shortest path
+     */
+    public Iterator<T> findShortestPath(T startVertex, T endVertex) {
+        int numVertices = this.size();
+        double[] distances = new double[numVertices];
         boolean[] visited = new boolean[numVertices];
-
-        if (!indexIsValid(startIndex)) {
-            return resultList.iterator();
-        }
+        int[] previous = new int[numVertices];
 
         for (int i = 0; i < numVertices; i++) {
-            visited[i] = false;
+            distances[i] = Double.MAX_VALUE;
+            previous[i] = -1;
         }
 
-        traversalStack.push(new Integer(startIndex));
-        resultList.addToRear(vertices[startIndex]);
-        visited[startIndex] = true;
+        // Set the distance for the start vertex
+        distances[getIndex(startVertex)] = 0;
 
-        while (!traversalStack.isEmpty()) {
-            x = traversalStack.peek();
-            found = false;
+        for (int i = 0; i < numVertices; i++) {
+            int closestVertex = -1;
+            double shortestDistance = Double.MAX_VALUE;
 
-            /** Find a vertex adjacent to x that has not been visited
-             and push it on the stack */
-            for (int i = 0; (i < numVertices) && !found; i++) {
-                if ((adjMatrix[x.intValue()][i] < Double.POSITIVE_INFINITY)
-                        && !visited[i]) {
-                    traversalStack.push(new Integer(i));
-                    resultList.addToRear(vertices[i]);
-                    visited[i] = true;
-                    found = true;
+            // Find the closest unvisited vertex
+            for (int j = 0; j < numVertices; j++) {
+                if (!visited[j] && distances[j] < shortestDistance) {
+                    closestVertex = j;
+                    shortestDistance = distances[j];
                 }
             }
-            if (!found && !traversalStack.isEmpty()) {
-                traversalStack.pop();
-            }
-        }
-        return resultList.iterator();
-    }
 
-    /**
-     * Returns an iterator that performs a depth first search
-     * traversal starting at the given vertex.
-     *
-     * @param startVertex the vertex to begin the traversal from
-     * @return an iterator that performs a depth first traversal
-     **/
-    public Iterator<T> iteratorDFS(T startVertex) {
-        return iteratorDFS(getIndex(startVertex));
-    }
-
-    /**
-     * Returns an iterator that performs a breadth first search
-     * traversal starting at the given index.
-     *
-     * @param startIndex the index from which to begin the traversal
-     * @return an iterator that performs a breadth first traversal
-     **/
-    private Iterator<T> iteratorBFS(int startIndex) {
-        Integer x;
-        LinkedQueue<Integer> traversalQueue = new LinkedQueue<Integer>();
-        ArrayUnorderedList<T> resultList = new ArrayUnorderedList<T>();
-
-        if (!indexIsValid(startIndex))
-            return resultList.iterator();
-
-        boolean[] visited = new boolean[numVertices];
-        for (int i = 0; i < numVertices; i++)
-            visited[i] = false;
-
-
-        traversalQueue.enqueue(new Integer(startIndex));
-        visited[startIndex] = true;
-
-        while (!traversalQueue.isEmpty()) {
-            x = traversalQueue.dequeue();
-            resultList.addToRear(vertices[x.intValue()]);
-
-            /** Find all vertices adjacent to x that have not been
-             visited and queue them up */
-            for (int i = 0; i < numVertices; i++) {
-                if ((adjMatrix[x.intValue()][i] < Double.POSITIVE_INFINITY)
-                        && !visited[i]) {
-                    traversalQueue.enqueue(new Integer(i));
-                    visited[i] = true;
-                }
-            }
-        }
-        return resultList.iterator();
-    }
-
-    /**
-     * Returns an iterator that performs a breadth first search
-     * traversal starting at the given vertex.
-     *
-     * @param startVertex the vertex to begin the traversal from
-     * @return an iterator that performs a breadth first traversal
-     **/
-    public Iterator<T> iteratorBFS(T startVertex) {
-        return iteratorBFS(getIndex(startVertex));
-    }
-
-    /**
-     * Returns an iterator that contains the indices of the vertices
-     * that are in the shortest path between the two given vertices.
-     *
-     * @param startIndex  the starting index
-     * @param targetIndex the target index
-     * @return the iterator containing the indices of the vertices
-     **/
-    protected Iterator<Integer> iteratorShortestPathIndices
-    (int startIndex, int targetIndex) {
-        int index;
-        double weight;
-        int[] predecessor = new int[numVertices];
-        LinkedHeap<Double> traversalMinHeap = new LinkedHeap<Double>();
-        ArrayUnorderedList<Integer> resultList =
-                new ArrayUnorderedList<Integer>();
-        LinkedStack<Integer> stack = new LinkedStack<Integer>();
-
-        int[] pathIndex = new int[numVertices];
-        double[] pathWeight = new double[numVertices];
-        for (int i = 0; i < numVertices; i++) {
-            pathWeight[i] = Double.POSITIVE_INFINITY;
-        }
-
-        boolean[] visited = new boolean[numVertices];
-        for (int i = 0; i < numVertices; i++) {
-            visited[i] = false;
-        }
-
-        if (!indexIsValid(startIndex) || !indexIsValid(targetIndex) ||
-                (startIndex == targetIndex) || isEmpty()) {
-            return resultList.iterator();
-        }
-
-        pathWeight[startIndex] = 0;
-        predecessor[startIndex] = -1;
-        visited[startIndex] = true;
-        weight = 0;
-
-        /** Update the pathWeight for each vertex except the
-         startVertex. Notice that all vertices not adjacent
-         to the startVertex will have a pathWeight of
-         infinity for now. */
-        for (int i = 0; i < numVertices; i++) {
-            if (!visited[i]) {
-                pathWeight[i] = pathWeight[startIndex] +
-                        adjMatrix[startIndex][i];
-                predecessor[i] = startIndex;
-                traversalMinHeap.addElement(new Double(pathWeight[i]));
-            }
-        }
-
-        do {
-            weight = (traversalMinHeap.removeMin()).doubleValue();
-            traversalMinHeap = new LinkedHeap<>();
-            if (weight == Double.POSITIVE_INFINITY) { // no possible path
-                return resultList.iterator();
-            } else {
-                index = getIndexOfAdjVertexWithWeightOf(visited, pathWeight,
-                        weight);
-                visited[index] = true;
+            // If no vertex is found, exit the loop
+            if (closestVertex == -1) {
+                break;
             }
 
-            /** Update the pathWeight for each vertex that has not been
-             visited and is adjacent to the last vertex that was visited.
-             Also, add each unvisited vertex to the heap. */
-            for (int i = 0; i < numVertices; i++) {
-                if (!visited[i]) {
-                    if ((adjMatrix[index][i] < Double.POSITIVE_INFINITY) &&
-                            (pathWeight[index] + adjMatrix[index][i]) < pathWeight[i]) {
-                        pathWeight[i] = pathWeight[index] + adjMatrix[index][i];
-                        predecessor[i] = index;
-                    }
-                    traversalMinHeap.addElement(new Double(pathWeight[i]));
-                }
-            }
-        } while (!traversalMinHeap.isEmpty() && !visited[targetIndex]);
+            visited[closestVertex] = true;
 
-        index = targetIndex;
-        stack.push(new Integer(index));
-        do {
-            index = predecessor[index];
-            stack.push(new Integer(index));
-        } while (index != startIndex);
-
-        while (!stack.isEmpty()) {
-            resultList.addToRear((stack.pop()));
-        }
-
-        return resultList.iterator();
-    }
-
-    /**
-     * Returns the index of the vertex that that is adjacent to
-     * the vertex with the given index and also has a pathWeight equal
-     * to weight.
-     *
-     * @param visited    the array of booleans to check against to see if a vertex has been visited or not
-     *                   (true if visited, false if not)
-     * @param pathWeight the array of doubles to check against to see if a vertex has a pathWeight equal to weight
-     * @param weight     the weight of the path
-     * @return the index of the vertex that is adjacent to the vertex with the given index and also has a pathWeight
-     * equal to weight
-     **/
-    protected int getIndexOfAdjVertexWithWeightOf(boolean[] visited,
-                                                  double[] pathWeight, double weight) {
-        for (int i = 0; i < numVertices; i++) {
-            if ((pathWeight[i] == weight) && !visited[i]) {
-                for (int j = 0; j < numVertices; j++) {
-                    if ((adjMatrix[i][j] < Double.POSITIVE_INFINITY) &&
-                            visited[j]) {
-                        return i;
+            // Update distances for neighboring vertices
+            for (int j = 0; j < numVertices; j++) {
+                if (!visited[j] && adjMatrix[closestVertex][j]) {  // Checking if an edge exists
+                    double edgeDistance = weightMatrix[closestVertex][j];
+                    if (distances[closestVertex] + edgeDistance < distances[j]) {
+                        distances[j] = distances[closestVertex] + edgeDistance;
+                        previous[j] = closestVertex;
                     }
                 }
             }
         }
-        return -1;  // should never get to here
+
+        // Construct the shortest path by backtracking through the `previous` array
+        ArrayUnorderedList<T> path = new ArrayUnorderedList<>();
+        int endIndex = getIndex(endVertex);
+        int startIndex = getIndex(startVertex);
+
+        if (previous[endIndex] != -1 || startVertex.equals(endVertex)) {
+            for (int vertex = endIndex; vertex != -1; vertex = previous[vertex]) {
+                path.addToFront(getVertex(vertex));
+            }
+        }
+
+        // Ensure the path starts with startVertex
+        if (!path.isEmpty() && path.first().equals(endVertex)) {
+            path.addToFront(startVertex);
+        }
+
+        return path.iterator();
     }
 
     /**
-     * Returns an iterator that contains the shortest path between
-     * the two vertices.
+     * Calculates the weight of the shortest path between two vertices.
      *
-     * @param startIndex  the starting index
-     * @param targetIndex the target index
-     * @return an iterator that contains the shortest path between the two vertices specified by the indices
-     * of the vertices in the path
-     **/
-    private Iterator<T> iteratorShortestPath(int startIndex, int targetIndex) {
-        ArrayUnorderedList templist = new ArrayUnorderedList();
-        if (!indexIsValid(startIndex) || !indexIsValid(targetIndex)) {
-            return templist.iterator();
-        }
-
-        Iterator<Integer> it = iteratorShortestPathIndices(startIndex,
-                targetIndex);
-        while (it.hasNext()) {
-            templist.addToRear(vertices[(it.next()).intValue()]);
-        }
-        return templist.iterator();
-    }
-
-    /**
-     * Returns an iterator that contains the shortest path between
-     * the two vertices.
-     *
-     * @param startVertex  the starting vertex
+     * @param startVertex the starting vertex
      * @param targetVertex the target vertex
-     * @return an iterator that contains the shortest path between the two vertices
-     **/
-    public Iterator<T> iteratorShortestPath(T startVertex, T targetVertex) {
-        return iteratorShortestPath(getIndex(startVertex),
-                getIndex(targetVertex));
-    }
-
-    /**
-     * Returns the weight of the least weight path in the network.
-     * Returns positive infinity if no path is found.
-     *
-     * @param startIndex  the starting index
-     * @param targetIndex the target index
-     * @return the weight of the least weight path in the network
-     **/
-    public double shortestPathWeight(int startIndex, int targetIndex) {
-        double result = 0;
-        if (!indexIsValid(startIndex) || !indexIsValid(targetIndex)) {
-            return Double.POSITIVE_INFINITY;
-        }
-
-        int index1, index2;
-        Iterator<Integer> it = iteratorShortestPathIndices(startIndex,
-                targetIndex);
-
-        if (it.hasNext()) {
-            index1 = ((Integer) it.next()).intValue();
-        } else {
-            return Double.POSITIVE_INFINITY;
-        }
-
-        while (it.hasNext()) {
-            index2 = (it.next()).intValue();
-            result += adjMatrix[index1][index2];
-            index1 = index2;
-        }
-
-        return result;
-    }
-
-    /**
-     * Returns the weight of the least weight path in the network.
-     * Returns positive infinity if no path is found.
-     *
-     * @param startVertex  the starting vertex
-     * @param targetVertex the target vertex
-     * @return the weight of the least weight path in the network
-     **/
+     * @return the weight of the shortest path
+     */
     @Override
     public double shortestPathWeight(T startVertex, T targetVertex) {
-        return shortestPathWeight(getIndex(startVertex),
-                getIndex(targetVertex));
-    }
-
-    /**
-     * Returns a minimum-spanning tree of the network.
-     **/
-    public Network mstNetwork() {
-        int x, y;
-        int index;
-        double weight;
-        int[] edge = new int[2];
-        LinkedHeap<Double> minHeap = new LinkedHeap<Double>();
-        Network<T> resultGraph = new Network<T>();
-
-        if (isEmpty() || !isConnected()) {
-            return resultGraph;
+        int startIndex = getIndex(startVertex);
+        int targetIndex = getIndex(targetVertex);
+        if (!indexIsValid(startIndex) || !indexIsValid(targetIndex)) {
+            return Double.POSITIVE_INFINITY;
         }
-
-        resultGraph.adjMatrix = new double[numVertices][numVertices];
-        for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numVertices; j++) {
-                resultGraph.adjMatrix[i][j] = Double.POSITIVE_INFINITY;
-            }
-        }
-        resultGraph.vertices = (T[]) (new Object[numVertices]);
-
+        double[] distances = new double[numVertices];
         boolean[] visited = new boolean[numVertices];
+
         for (int i = 0; i < numVertices; i++) {
+            distances[i] = Double.POSITIVE_INFINITY;
             visited[i] = false;
         }
 
-        edge[0] = 0;
-        resultGraph.vertices[0] = this.vertices[0];
-        resultGraph.numVertices++;
-        visited[0] = true;
+        distances[startIndex] = 0;
 
-        /** Add all edges, which are adjacent to the starting vertex,
-         to the heap */
-        for (int i = 0; i < numVertices; i++) {
-            minHeap.addElement(new Double(adjMatrix[0][i]));
-        }
+        for (int i = 0; i < numVertices - 1; i++) {
+            int u = minDistance(distances, visited);
+            visited[u] = true;
 
-        while ((resultGraph.size() < this.size()) && !minHeap.isEmpty()) {
-            /** Get the edge with the smallest weight that has exactly
-             one vertex already in the resultGraph */
-            do {
-                weight = (minHeap.removeMin()).doubleValue();
-                edge = getEdgeWithWeightOf(weight, visited);
-            } while (!indexIsValid(edge[0]) || !indexIsValid(edge[1]));
+            for (int v = 0; v < numVertices; v++) {
 
-            x = edge[0];
-            y = edge[1];
-            if (!visited[x]) {
-                index = x;
-            } else {
-                index = y;
-            }
-
-            /** Add the new edge and vertex to the resultGraph */
-            resultGraph.vertices[index] = this.vertices[index];
-            visited[index] = true;
-            resultGraph.numVertices++;
-
-            resultGraph.adjMatrix[x][y] = this.adjMatrix[x][y];
-            resultGraph.adjMatrix[y][x] = this.adjMatrix[y][x];
-
-            /** Add all edges, that are adjacent to the newly added vertex,
-             to the heap */
-            for (int i = 0; i < numVertices; i++) {
-                if (!visited[i] && (this.adjMatrix[i][index] <
-                        Double.POSITIVE_INFINITY)) {
-                    edge[0] = index;
-                    edge[1] = i;
-                    minHeap.addElement(new Double(adjMatrix[index][i]));
+                if (!visited[v] && adjMatrix[u][v] && distances[u] != Double.POSITIVE_INFINITY
+                        && distances[u] + weightMatrix[u][v] < distances[v]) {
+                    distances[v] = distances[u] + weightMatrix[u][v];
                 }
             }
         }
-        return resultGraph;
+        return distances[targetIndex];
     }
 
     /**
-     * Returns the edge with the given weight.  Exactly one vertex of
-     * the edge must have been visited.
+     * Finds the vertex with the minimum distance that has not been visited.
      *
-     * @param weight  the weight of the edge to be found
-     * @param visited the array of booleans to check against to see if a vertex has been visited or not
-     *                (true if visited, false if not)
-     * @return the edge with the given weight and a vertex that has been visited
-     **/
-    protected int[] getEdgeWithWeightOf(double weight, boolean[] visited) {
-        int[] edge = new int[2];
-        for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numVertices; j++) {
-                if ((adjMatrix[i][j] == weight) && (visited[i] ^ visited[j])) {
-                    edge[0] = i;
-                    edge[1] = j;
-                    return edge;
-                }
+     * @param distances an array of distances to each vertex
+     * @param visited   an array indicating whether each vertex has been visited
+     * @return the index of the vertex with the minimum distance
+     */
+    private int minDistance(double[] distances, boolean[] visited) {
+        double min = Double.POSITIVE_INFINITY;
+        int minIndex = -1;
+
+        for (int v = 0; v < numVertices; v++) {
+            if (!visited[v] && distances[v] <= min) {
+                min = distances[v];
+                minIndex = v;
             }
         }
-
-        /** Will only get to here if a valid edge is not found */
-        edge[0] = -1;
-        edge[1] = -1;
-        return edge;
-    }
-
-    /**
-     * Creates new arrays to store the contents of the graph with
-     * twice the capacity.
-     **/
-    protected void expandCapacity() {
-        T[] largerVertices = (T[]) (new Object[vertices.length * 2]);
-        double[][] largerAdjMatrix =
-                new double[vertices.length * 2][vertices.length * 2];
-
-        for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numVertices; j++) {
-                largerAdjMatrix[i][j] = adjMatrix[i][j];
-            }
-            largerVertices[i] = vertices[i];
-        }
-
-        vertices = largerVertices;
-        adjMatrix = largerAdjMatrix;
+        return minIndex;
     }
 }

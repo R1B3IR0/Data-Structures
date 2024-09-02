@@ -4,6 +4,7 @@ package collections.graphs;
  * NetworkADT defines the interface to a network.
  */
 public interface NetworkADT<T> extends GraphADT<T> {
+
     /**
      * Inserts an edge between two vertices of this graph.
      *
